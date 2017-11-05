@@ -1,8 +1,9 @@
-package Api;
+package requestertests;
 
 import org.json.*;
 import org.junit.Before;
 import org.junit.Test;
+import requester.WeatherApiDataRequester;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -13,19 +14,19 @@ import static org.junit.Assert.fail;
 
 public class WeatherApiTest {
 
-    private String EE = "ee";
-    private WeatherApi api;
+    private final String EE = "ee";
+    private WeatherApiDataRequester api;
 
     @Before
-    public void setup() {
-        this.api = new WeatherApi("Tallinn", this.EE);
+    public void setup() throws IOException {
+        this.api = new WeatherApiDataRequester("Tallinn", this.EE, false, false);
     }
 
     @Test
     public void jsonResultIsNotEmptyTest() {
         JSONObject jsonResult;
         try {
-            jsonResult = this.api.getJsonResult();
+            jsonResult = this.api.getJsonResult("forecast");
             assertEquals(false, jsonResult.equals(""));
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -37,7 +38,7 @@ public class WeatherApiTest {
     public void jsonResultIsNotNull() {
         JSONObject jsonResult;
         try {
-            jsonResult = this.api.getJsonResult();
+            jsonResult = this.api.getJsonResult("forecast");
             assertEquals(false, jsonResult == null);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -47,36 +48,27 @@ public class WeatherApiTest {
     @Test
     public void correctUrlTest() {
         try {
-            assertEquals("http://api.openweathermap.org/data/2.5/forecast?id=588409&APPID=d7a75eff97fea51d0f48be9fdc73811a&units=metric", this.api.getUrl());
+            assertEquals("http://api.openweathermap.org/data/2.5/forecast?q=Tallinn,ee&units=metric&APPID=d7a75eff97fea51d0f48be9fdc73811a", this.api.getUrl("forecast"));
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
         }
     }
 
     @Test
-    public void correctUrlTest2() {
+    public void incorrectInputTest1() throws IOException {
+        WeatherApiDataRequester api2 = new WeatherApiDataRequester("Tallinn", null, false, false);
         try {
-            assertEquals("http://api.openweathermap.org/data/2.5/forecast?id=588409&APPID=d7a75eff97fea51d0f48be9fdc73811a&units=metric", this.api.getUrl());
+            assertEquals(null, api2.getUrl("forecast"));
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
         }
     }
 
     @Test
-    public void incorrectInputTest1() {
-        WeatherApi api2 = new WeatherApi("Tallinn", null);
+    public void incorrectInputTest2() throws IOException {
+        WeatherApiDataRequester api2 = new WeatherApiDataRequester(null, this.EE, false, false);
         try {
-            assertEquals(null, api2.getUrl());
-        } catch (Exception e) {
-            fail("Failure cause: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void incorrectInputTest2() {
-        WeatherApi api2 = new WeatherApi(null, this.EE);
-        try {
-            assertEquals(null, api2.getUrl());
+            assertEquals(null, api2.getUrl("forecast"));
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
         }
@@ -85,7 +77,7 @@ public class WeatherApiTest {
     @Test
     public void correctOutputCordinatesTest() {
         try {
-            Double[] cordinates = this.api.getCordinates();
+            Double[] cordinates = this.api.getCurrentDataRequester().getCordinates();
             assertTrue(cordinates[0] != null && cordinates[1] != null);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -95,7 +87,7 @@ public class WeatherApiTest {
     @Test
     public void cordinatesNotNullTest() {
         try {
-            Double[] cordinates = this.api.getCordinates();
+            Double[] cordinates = this.api.getCurrentDataRequester().getCordinates();
             assertFalse(cordinates == null);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -105,7 +97,7 @@ public class WeatherApiTest {
     @Test
     public void cordinatesHaveTwoElementsTest() {
         try {
-            Double[] cordinates = this.api.getCordinates();
+            Double[] cordinates = this.api.getCurrentDataRequester().getCordinates();
             assertTrue(cordinates.length == 2);
         } catch (Exception e) {
             fail("Failure cause:" + e.getMessage());
@@ -117,7 +109,7 @@ public class WeatherApiTest {
     @Test
     public void nullThreeDaysForecastHighestTempRequestTest() {
         try {
-            List highestTemp = this.api.getHighestTemperatures(null);
+            List highestTemp = this.api.getForecastDataRequester().getHighestTemperatures(null);
             assertEquals(null, highestTemp);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -127,7 +119,7 @@ public class WeatherApiTest {
     @Test
     public void nullThreeDaysForecastLowestTempRequestTest() {
         try {
-            List lowestTemp = this.api.getLowestTemperatures(null);
+            List lowestTemp = this.api.getForecastDataRequester().getLowestTemperatures(null);
             assertEquals(null, lowestTemp);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -137,7 +129,7 @@ public class WeatherApiTest {
     @Test
     public void notNullThreeDaysForecastHighestTempRequestTest() {
         try {
-            List highestTemp = this.api.getHighestTemperatures(this.api.getThreeDaysForecast());
+            List highestTemp = this.api.getForecastDataRequester().getHighestTemperatures(this.api.getForecastDataRequester().getThreeDaysForecast());
             assertFalse(highestTemp == null);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -147,7 +139,7 @@ public class WeatherApiTest {
     @Test
     public void notNullThreeDaysForecastLowestTempRequestTest() {
         try {
-            List lowestTemp = this.api.getLowestTemperatures(this.api.getThreeDaysForecast());
+            List lowestTemp = this.api.getForecastDataRequester().getLowestTemperatures(this.api.getForecastDataRequester().getThreeDaysForecast());
             assertFalse(lowestTemp == null);
         } catch (Exception e) {
             fail("Failure cause: " + e.getMessage());
@@ -155,51 +147,45 @@ public class WeatherApiTest {
     }
 
     @Test
-    public void jsonThreeDaysForecastLengthTest() throws IOException, ParseException {
-        JSONArray threeDaysForecast = this.api.getThreeDaysForecast();
-        assertEquals(threeDaysForecast.length(), 25);
-    }
-
-    @Test
     public void jsonThreeDaysForecastIsNullTest() throws IOException, ParseException {
-        JSONArray threeDaysForecast = this.api.getThreeDaysForecast();
+        JSONArray threeDaysForecast = this.api.getForecastDataRequester().getThreeDaysForecast();
         assertEquals(false, threeDaysForecast == null);
     }
 
     @Test
     public void currentTempInRangeTest() throws IOException {
-        assertTrue(this.api.getCurrentTemperature() <= 35 && this.api.getCurrentTemperature() >= -35);
+        assertTrue(this.api.getCurrentDataRequester().getCurrentTemperature() <= 35 && this.api.getCurrentDataRequester().getCurrentTemperature() >= -35);
     }
 
     @Test
     public void readFromPageNotNullTest() throws IOException {
-        assertTrue(this.api.readFromPage() != null);
+        assertTrue(this.api.readFromPage(this.api.getUrl("forecast")) != null);
     }
 
     @Test
     public void readFromPageNotEmptyTest() throws IOException {
-        assertTrue(!this.api.readFromPage().equals(""));
+        assertTrue(!this.api.readFromPage(this.api.getUrl("forecast")).equals(""));
     }
 
     @Test
     public void addTimeToDateTest() throws IOException, ParseException {
         String currentDate = "2017-10-14 21:45:00";
-        assertEquals("2017-10-15 21:45:00", this.api.addTimeToDate(currentDate, 24));
+        assertEquals("2017-10-15 21:45:00", this.api.getForecastDataRequester().addTimeToDate(currentDate, 24));
     }
 
     @Test
     public void addTimeToDateZeroHoursTest() throws IOException, ParseException {
         String currentDate = "2017-10-14 21:45:00";
-        assertEquals(null, this.api.addTimeToDate(currentDate, 0));
+        assertEquals(null, this.api.getForecastDataRequester().addTimeToDate(currentDate, 0));
     }
 
     @Test
     public void addTimeToDateNullCurrentDateTest() throws IOException, ParseException {
-        assertEquals(null, this.api.addTimeToDate(null, 24));
+        assertEquals(null, this.api.getForecastDataRequester().addTimeToDate(null, 24));
     }
 
     @Test
     public void addTimeToDateEmptyCurrentDateTest() throws IOException, ParseException {
-        assertEquals(null, this.api.addTimeToDate("", 24));
+        assertEquals(null, this.api.getForecastDataRequester().addTimeToDate("", 24));
     }
 }
