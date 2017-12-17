@@ -1,0 +1,3 @@
+Tallinn,ee
+Moscow,ru
+Berlin,de
