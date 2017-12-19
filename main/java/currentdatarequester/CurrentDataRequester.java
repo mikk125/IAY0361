@@ -13,7 +13,7 @@ public class CurrentDataRequester {
 
     public CurrentDataRequester(JSONObject jsonResult, boolean writeDataToFile, Writer writer) {
         this.writeDataToFile = writeDataToFile;
-        this.jsonObject=jsonResult;
+        this.jsonObject = jsonResult;
         this.writer = writer;
     }
 

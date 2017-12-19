@@ -109,7 +109,7 @@ public class ForecastDataRequester {
     public Double getMin(List<Double> array) {
         double min = (double) array.get(0);
         for (Double i : array){
-            min = min > i ? min : i;
+            min = min < i ? min : i;
         }
         return min;
     }
@@ -117,7 +117,7 @@ public class ForecastDataRequester {
     public Double getMax(List<Double> array) {
         double max = (double) array.get(0);
         for (Double i : array){
-            max = max < i ? max : i;
+            max = max > i ? max : i;
         }
         return max;
     }
@@ -134,5 +134,9 @@ public class ForecastDataRequester {
             this.writer.writeStringToFile(String.format("Lowest temperatures: %s", lowestTemperatures));
         }
         return lowestTemperatures;
+    }
+
+    public JSONObject getJsonObject() {
+        return jsonObject;
     }
 }

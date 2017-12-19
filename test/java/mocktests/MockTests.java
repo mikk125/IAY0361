@@ -1,14 +1,18 @@
 package mocktests;
 
 import currentdatarequester.CurrentDataRequester;
+import forecast.ForecastDataRequester;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import requester.WeatherApiDataRequester;
 import writer.Writer;
+
+import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import static org.junit.Assert.assertTrue;
 
 public class MockTests {
 
@@ -26,29 +30,39 @@ public class MockTests {
     }
 
     @Test
-    public void correctResultForForecast() throws IOException {
-        Mockito.when(this.weatherApiDataRequesterMockObj.getJsonResult("forecast")).thenReturn(this.forecastResponse);
+    public void createNewFileTest() throws IOException {
+        this.mockedFileWriter.setCity("Tallinn");
+        this.mockedFileWriter.writeStringToFile(Mockito.anyString());
+        assertTrue(new File("src/main/java/requester").list().length > 0);
     }
 
     @Test
-    public void correctResultForWeather() throws IOException {
+    public void currentWeatherGetJsonResult() throws IOException {
         Mockito.when(this.weatherApiDataRequesterMockObj.getJsonResult("weather")).thenReturn(this.weatherResponse);
+        CurrentDataRequester currentDataRequester = new CurrentDataRequester(this.weatherApiDataRequesterMockObj.getJsonResult("weather"), true, this.mockedFileWriter);
+        assertTrue(currentDataRequester.getJsonObject() == this.weatherResponse);
     }
 
     @Test
-    public void correctUrlForForecast() {
-        Mockito.when(this.weatherApiDataRequesterMockObj.getUrl("forecast")).thenReturn("http://api.openweathermap.org/data/2.5/forecast?q=Tallinn,ee&units=metric&APPID=d7a75eff97fea51d0f48be9fdc73811a");
+    public void currentForecastGetJsonResult() throws IOException {
+        Mockito.when(this.weatherApiDataRequesterMockObj.getJsonResult("forecast")).thenReturn(this.forecastResponse);
+        ForecastDataRequester forecastDataRequester = new ForecastDataRequester(this.weatherApiDataRequesterMockObj.getJsonResult("forecast"), true, this.mockedFileWriter);
+        assertTrue(forecastDataRequester.getJsonObject() == this.forecastResponse);
     }
 
     @Test
-    public void correctUrlForWeather() {
-        Mockito.when(this.weatherApiDataRequesterMockObj.getUrl("weather")).thenReturn("http://api.openweathermap.org/data/2.5/weather?q=Tallinn,ee&units=metric&APPID=d7a75eff97fea51d0f48be9fdc73811a");
+    public void currentWeatherAppWritesToFile() throws IOException {
+        CurrentDataRequester currentDataRequester = new CurrentDataRequester(this.weatherResponse, true, this.mockedFileWriter);
+        currentDataRequester.getCordinates();
+        Mockito.verify(this.mockedFileWriter, Mockito.times(1)).writeStringToFile(Mockito.anyString());
     }
 
     @Test
-    public void hasFile() throws IOException {
-        this.mockedFileWriter.setCity("Kehtna");
-
-        Mockito.doNothing().when(this.mockedFileWriter).writeStringToFile(Mockito.anyString());
+    public void forecastWeatherAppWritesToFile() throws IOException, ParseException {
+        ForecastDataRequester forecastDataRequester = new ForecastDataRequester(this.forecastResponse, true, this.mockedFileWriter);
+        forecastDataRequester.getHighestTemperatures(forecastDataRequester.getThreeDaysForecast());
+        Mockito.verify(this.mockedFileWriter, Mockito.times(1)).writeStringToFile(Mockito.anyString());
     }
+
+
 }
